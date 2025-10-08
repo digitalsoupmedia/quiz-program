@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Competition - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        },
+                        sidebar: '#1e293b',
+                        'sidebar-hover': '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        
+        .card-shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        
+        .scrollbar-hidden {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .scrollbar-hidden::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* Hide content initially until authentication is verified */
+        .auth-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #f9fafb;
+        }
+        
+        .main-content {
+            display: none;
+        }
+        
+        .main-content.authenticated {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Authentication Loading Screen -->
+    <div id="auth-loading" class="auth-loading">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-600 font-medium">Verifying authentication...</p>
+        </div>
+    </div>
+
+    <!-- Main Content (hidden until authenticated) -->
+    <div id="main-content" class="main-content">
+    <!-- Navigation Header -->
+    <nav class="bg-white border-b border-gray-200 fixed w-full z-30 top-0">
+        <div class="px-3 py-3 lg:px-5 lg:pl-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center justify-start">
+                    <button id="toggleSidebar" class="lg:hidden p-2 text-gray-600 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100">
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
+                    <a href="#" class="text-xl font-bold text-gray-900 ml-2 md:mr-24">
+                        <span class="gradient-bg bg-clip-text text-transparent">QuizAdmin</span>
+                    </a>
+                </div>
+                <div class="flex items-center">
+                    <div class="hidden mr-3 -mb-1 sm:block">
+                        <span class="text-base text-gray-900 font-semibold mr-1">Hello,</span>
+                        <span id="admin-name" class="text-base text-gray-900 font-normal">Admin</span>
+                    </div>
+                    <div class="flex items-center ml-3">
+                        <button class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 relative">
+                            <img class="w-8 h-8 rounded-full" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L9 7V9C7.9 9 7 9.9 7 11V22H17V11C17 9.9 16.1 9 15 9H21Z'/%3E%3C/svg%3E" alt="user photo">
+                            <div class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-400 border-2 border-white rounded-full"></div>
+                        </button>
+                        <button onclick="logout()" class="ml-3 text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-20 w-64 h-screen pt-20 transition-transform -translate-x-full bg-sidebar border-r border-gray-200 lg:translate-x-0">
+        <div class="h-full px-3 pb-4 overflow-y-auto scrollbar-hidden">
+            <ul class="space-y-2 font-medium">
+                <li>
+                    <a href="#" onclick="showSection('dashboard')" class="nav-link active flex items-center p-3 text-white rounded-lg hover:bg-sidebar-hover group">
+                        <i class="fas fa-chart-pie text-lg w-5 h-5"></i>
+                        <span class="ml-3">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('participants')" class="nav-link flex items-center p-3 text-gray-300 rounded-lg hover:bg-sidebar-hover hover:text-white group">
+                        <i class="fas fa-users text-lg w-5 h-5"></i>
+                        <span class="ml-3">Participants</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('quizzes')" class="nav-link flex items-center p-3 text-gray-300 rounded-lg hover:bg-sidebar-hover hover:text-white group">
+                        <i class="fas fa-file-alt text-lg w-5 h-5"></i>
+                        <span class="ml-3">Quizzes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('sessions')" class="nav-link flex items-center p-3 text-gray-300 rounded-lg hover:bg-sidebar-hover hover:text-white group">
+                        <i class="fas fa-play-circle text-lg w-5 h-5"></i>
+                        <span class="ml-3">Live Sessions</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('results')" class="nav-link flex items-center p-3 text-gray-300 rounded-lg hover:bg-sidebar-hover hover:text-white group">
+                        <i class="fas fa-chart-bar text-lg w-5 h-5"></i>
+                        <span class="ml-3">Results</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- Upgrade Section -->
+            <div class="mt-8 p-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white text-center">
+                <div class="mb-2">
+                    <i class="fas fa-rocket text-2xl"></i>
+                </div>
+                <h3 class="font-semibold mb-1">Quiz Pro</h3>
+                <p class="text-xs opacity-90 mb-3">Advanced analytics & unlimited participants</p>
+                <button class="w-full bg-white text-blue-600 py-2 px-4 rounded text-sm font-medium hover:bg-gray-100 transition-colors">
+                    Upgrade
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="p-4 lg:ml-64">
+        <div class="pt-20">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="content-section">
+                <!-- Header -->
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-gray-900 mb-2">Dashboard</h1>
+                    <p class="text-gray-600">Welcome back! Here's what's happening with your quiz competitions.</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Total Participants -->
+                    <div class="bg-white rounded-xl p-6 card-shadow-lg border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Total Participants</p>
+                                <p id="total-participants" class="text-3xl font-bold text-gray-900">0</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="flex items-center text-sm text-green-600">
+                                        <i class="fas fa-arrow-up text-xs mr-1"></i>
+                                        <span class="font-medium">12%</span>
+                                    </span>
+                                    <span class="text-gray-500 text-sm ml-2">vs last month</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-blue-50 rounded-full">
+                                <i class="fas fa-users text-xl text-blue-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Sessions -->
+                    <div class="bg-white rounded-xl p-6 card-shadow-lg border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Active Sessions</p>
+                                <p id="active-sessions" class="text-3xl font-bold text-gray-900">0</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="flex items-center text-sm text-orange-600">
+                                        <i class="fas fa-clock text-xs mr-1"></i>
+                                        <span class="font-medium">Live</span>
+                                    </span>
+                                    <span class="text-gray-500 text-sm ml-2">sessions running</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-orange-50 rounded-full">
+                                <i class="fas fa-play-circle text-xl text-orange-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Quizzes -->
+                    <div class="bg-white rounded-xl p-6 card-shadow-lg border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Total Quizzes</p>
+                                <p id="total-quizzes" class="text-3xl font-bold text-gray-900">0</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="flex items-center text-sm text-green-600">
+                                        <i class="fas fa-plus text-xs mr-1"></i>
+                                        <span class="font-medium">5</span>
+                                    </span>
+                                    <span class="text-gray-500 text-sm ml-2">new this week</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-green-50 rounded-full">
+                                <i class="fas fa-file-alt text-xl text-green-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Completed Results -->
+                    <div class="bg-white rounded-xl p-6 card-shadow-lg border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Completed Results</p>
+                                <p id="total-results" class="text-3xl font-bold text-gray-900">0</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="flex items-center text-sm text-purple-600">
+                                        <i class="fas fa-chart-line text-xs mr-1"></i>
+                                        <span class="font-medium">98%</span>
+                                    </span>
+                                    <span class="text-gray-500 text-sm ml-2">completion rate</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-purple-50 rounded-full">
+                                <i class="fas fa-chart-bar text-xl text-purple-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and Tables Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Recent Sessions -->
+                    <div class="lg:col-span-2 bg-white rounded-xl card-shadow-lg border border-gray-100">
+                        <div class="p-6 border-b border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Recent Sessions</h3>
+                                <button class="text-blue-600 text-sm font-medium hover:text-blue-800">View All</button>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div id="recent-sessions-table" class="overflow-x-auto">
+                                <!-- Table will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Performers -->
+                    <div class="bg-white rounded-xl card-shadow-lg border border-gray-100">
+                        <div class="p-6 border-b border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900">Top Performers</h3>
+                            <p class="text-sm text-gray-600 mt-1">Last 30 days</p>
+                        </div>
+                        <div class="p-6">
+                            <div id="top-performers-list" class="space-y-4">
+                                <!-- List will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Participants Section -->
+            <div id="participants-section" class="content-section hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 mb-2">Participants</h1>
+                        <p class="text-gray-600">Manage quiz participants and their credentials</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button onclick="openModal('uploadParticipantsModal')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center">
+                            <i class="fas fa-upload mr-2"></i>
+                            Upload Participants
+                        </button>
+                        <button onclick="viewCredentials()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center">
+                            <i class="fas fa-eye mr-2"></i>
+                            View Credentials
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search and Filters -->
+                <div class="bg-white rounded-xl p-6 card-shadow-lg border border-gray-100 mb-6">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1">
+                            <div class="relative">
+                                <input type="text" id="participant-search" placeholder="Search by name, email, company, or designation..." 
+                                       class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                       onkeypress="handleSearchKeyPress(event)" oninput="handleSearchInput()">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <button onclick="clearSearch()" id="clear-search" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button onclick="searchParticipants()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                            Search
+                        </button>
+                        <button onclick="loadParticipants()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-refresh mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Results -->
+                <div id="search-results" class="hidden"></div>
+
+                <!-- Participants Table -->
+                <div class="bg-white rounded-xl card-shadow-lg border border-gray-100">
+                    <div class="p-6 border-b border-gray-100">
+                        <h3 class="text-lg font-semibold text-gray-900">All Participants</h3>
+                    </div>
+                    <div id="participants-table-container" class="overflow-x-auto">
+                        <!-- Table will be populated by JavaScript -->
+                    </div>
+                    <div id="participants-pagination" class="p-6 border-t border-gray-100">
+                        <!-- Pagination will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Sections (placeholder) -->
+            <div id="quizzes-section" class="content-section hidden">
+                <h1 class="text-2xl font-bold text-gray-900 mb-6">Quiz Management</h1>
+                
+                <!-- Quiz Actions -->
+                <div class="bg-white rounded-xl p-6 card-shadow-lg border border-gray-100 mb-6">
+                    <div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                        <div class="flex-1">
+                            <div class="relative">
+                                <input type="text" id="quiz-search" placeholder="Search quizzes by title or description..." 
+                                       class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                       onkeypress="handleQuizSearchKeyPress(event)" oninput="handleQuizSearchInput()">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <button onclick="clearQuizSearch()" id="clear-quiz-search" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="searchQuizzes()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                Search
+                            </button>
+                            <button onclick="loadQuizzes()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-refresh mr-2"></i>Refresh
+                            </button>
+                            <button onclick="openModal('createQuizModal')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center">
+                                <i class="fas fa-plus mr-2"></i>Create Quiz
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Search Results -->
+                <div id="quiz-search-results" class="hidden"></div>
+
+                <!-- Quizzes Table -->
+                <div class="bg-white rounded-xl card-shadow-lg border border-gray-100">
+                    <div class="p-6 border-b border-gray-100">
+                        <h3 class="text-lg font-semibold text-gray-900">All Quizzes</h3>
+                    </div>
+                    <div id="quizzes-table-container" class="overflow-x-auto">
+                        <!-- Table will be populated by JavaScript -->
+                    </div>
+                    <div id="quizzes-pagination" class="p-6 border-t border-gray-100">
+                        <!-- Pagination will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="sessions-section" class="content-section hidden">
+                <!-- Header -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between">
+                        <h1 class="text-2xl font-bold text-gray-900">Live Sessions</h1>
+                        <button onclick="openModal('createSessionModal')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center">
+                            <i class="fas fa-plus mr-2"></i>Create Session
+                        </button>
+                    </div>
+                    <p class="text-gray-600 mt-2">Manage live quiz sessions and monitor real-time participation</p>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                    <div class="bg-white rounded-xl p-6 card-shadow border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                <i class="fas fa-play-circle text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Active Sessions</p>
+                                <p id="active-sessions-count" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                <i class="fas fa-users text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Live Participants</p>
+                                <p id="live-participants-count" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                <i class="fas fa-clock text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Scheduled Today</p>
+                                <p id="scheduled-today-count" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                                <i class="fas fa-trophy text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Completed</p>
+                                <p id="completed-sessions-count" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sessions Filter and Search -->
+                <div class="bg-white rounded-xl p-6 card-shadow border border-gray-100 mb-6">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1">
+                            <input type="text" id="sessionSearch" placeholder="Search sessions..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onkeyup="searchSessions()">
+                        </div>
+                        <div class="flex gap-3">
+                            <select id="sessionStatusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="filterSessions()">
+                                <option value="">All Statuses</option>
+                                <option value="scheduled">Scheduled</option>
+                                <option value="instruction">Instruction Phase</option>
+                                <option value="active">Active</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            <button onclick="searchSessions()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">Search</button>
+                            <button onclick="loadSessions()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"><i class="fas fa-refresh mr-2"></i>Refresh</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sessions Table -->
+                <div class="bg-white rounded-xl card-shadow border border-gray-100">
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Session Management</h3>
+                        <p class="text-gray-600 text-sm">Monitor and control live quiz sessions</p>
+                    </div>
+                    <div id="sessions-table-container" class="p-6">
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-play-circle text-4xl mb-4"></i>
+                            <p class="text-lg">No sessions found</p>
+                            <p class="text-sm">Create your first quiz session to get started</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results-section" class="content-section hidden">
+                <h1 class="text-2xl font-bold text-gray-900 mb-6">Results & Analytics</h1>
+                
+                <!-- Dashboard Statistics -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl p-6 card-shadow border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                <i class="fas fa-chart-line text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 mb-1">Completed Sessions</p>
+                                <p id="resultsSessionCount" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 card-shadow border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                <i class="fas fa-users text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 mb-1">Total Participants</p>
+                                <p id="resultsParticipantCount" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 card-shadow border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                <i class="fas fa-percentage text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 mb-1">Average Score</p>
+                                <p id="resultsAverageScore" class="text-2xl font-bold text-gray-900">0%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 card-shadow border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                                <i class="fas fa-trophy text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 mb-1">Prize Winners</p>
+                                <p id="resultsPrizeWinners" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Categories Chart -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white rounded-xl p-6 card-shadow border border-gray-100">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Distribution</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-4 h-4 bg-green-500 rounded mr-3"></div>
+                                    <span class="text-sm text-gray-600">Excellent</span>
+                                </div>
+                                <span id="excellentCount" class="text-sm font-medium text-gray-900">0</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-4 h-4 bg-yellow-500 rounded mr-3"></div>
+                                    <span class="text-sm text-gray-600">Good</span>
+                                </div>
+                                <span id="goodCount" class="text-sm font-medium text-gray-900">0</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-4 h-4 bg-red-500 rounded mr-3"></div>
+                                    <span class="text-sm text-gray-600">Needs Improvement</span>
+                                </div>
+                                <span id="needsImprovementCount" class="text-sm font-medium text-gray-900">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow border border-gray-100">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Sessions</h3>
+                        <div id="recentSessionsList" class="space-y-3">
+                            <div class="text-center py-4 text-gray-500">
+                                <i class="fas fa-chart-bar text-2xl mb-2"></i>
+                                <p>No recent sessions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Results Browser -->
+                <div class="bg-white rounded-xl card-shadow border border-gray-100">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4 sm:mb-0">Session Results</h3>
+                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                                <div class="relative">
+                                    <input type="text" id="resultsSearch" placeholder="Search sessions..." 
+                                           class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64">
+                                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                </div>
+                                <input type="date" id="resultsDateFrom" 
+                                       class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="date" id="resultsDateTo" 
+                                       class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <button onclick="searchResults()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                                    <i class="fas fa-search mr-2"></i>Filter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="results-table-container" class="p-6">
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-chart-line text-4xl mb-4"></i>
+                            <p class="text-lg">No session results found</p>
+                            <p class="text-sm">Complete some quiz sessions to see results here</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Performers -->
+                <div class="mt-8 bg-white rounded-xl card-shadow border border-gray-100">
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Top Performers (Last 30 Days)</h3>
+                    </div>
+                    <div id="top-performers-results" class="p-6">
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-medal text-4xl mb-4"></i>
+                            <p>No top performers data available</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Upload Participants Modal -->
+    <div id="uploadParticipantsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-xl bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Upload Participants</h3>
+                    <button onclick="closeModal('uploadParticipantsModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="mt-4">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600 mb-2">Drag and drop your file here, or</p>
+                        <input type="file" id="participantFile" accept=".csv,.xlsx,.xls" class="hidden">
+                        <button onclick="document.getElementById('participantFile').click()" class="text-blue-600 font-medium hover:text-blue-800">browse files</button>
+                        <p class="text-xs text-gray-500 mt-2">Supports CSV, Excel files</p>
+                    </div>
+                    <div class="mt-4 flex justify-end space-x-3">
+                        <button onclick="closeModal('uploadParticipantsModal')" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                        <button onclick="uploadParticipants()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Upload</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Credentials Modal -->
+    <div id="viewCredentialsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border shadow-lg rounded-xl bg-white max-w-4xl">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Participant Credentials</h3>
+                    <button onclick="closeModal('viewCredentialsModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="credentials-table-container" class="mt-4">
+                    <!-- Credentials table will be populated here -->
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeModal('viewCredentialsModal')" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Close</button>
+                    <button onclick="exportCredentials()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        <i class="fas fa-download mr-2"></i>Export CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Participant Modal -->
+    <div id="editParticipantModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-xl bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Edit Participant</h3>
+                    <button onclick="closeModal('editParticipantModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="editParticipantForm" class="space-y-4">
+                    <input type="hidden" id="editParticipantId">
+                    <div>
+                        <label for="editName" class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                        <input type="text" id="editName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="editEmail" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <input type="email" id="editEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="editCompany" class="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                        <input type="text" id="editCompany" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="editDesignation" class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
+                        <input type="text" id="editDesignation" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="editMobile" class="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                        <input type="tel" id="editMobile" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="+91 9876543210">
+                        <p class="text-xs text-gray-500 mt-1">Changing mobile will reset password to the new mobile number</p>
+                    </div>
+                </form>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeModal('editParticipantModal')" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                    <button onclick="saveParticipant()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Quiz Modal -->
+    <div id="createQuizModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-xl bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Create New Quiz</h3>
+                    <button onclick="closeModal('createQuizModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="createQuizForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label for="quizTitle" class="block text-sm font-medium text-gray-700 mb-1">Quiz Title *</label>
+                            <input type="text" id="quizTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="quizDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="quizDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+                        <div>
+                            <label for="quizDate" class="block text-sm font-medium text-gray-700 mb-1">Quiz Date *</label>
+                            <input type="date" id="quizDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="quizTime" class="block text-sm font-medium text-gray-700 mb-1">Start Time *</label>
+                            <input type="time" id="quizTime" value="04:00" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="instructionMinutes" class="block text-sm font-medium text-gray-700 mb-1">Instruction Time (minutes)</label>
+                            <input type="number" id="instructionMinutes" value="5" min="1" max="30" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="quizMinutes" class="block text-sm font-medium text-gray-700 mb-1">Quiz Duration (minutes)</label>
+                            <input type="number" id="quizMinutes" value="15" min="5" max="180" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="totalQuestions" class="block text-sm font-medium text-gray-700 mb-1">Total Questions</label>
+                            <input type="number" id="totalQuestions" value="20" min="1" max="100" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="isActive" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <label for="isActive" class="ml-2 text-sm text-gray-700">Active Quiz</label>
+                        </div>
+                    </div>
+                </form>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeModal('createQuizModal')" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                    <button onclick="createQuiz()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Create Quiz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Quiz Modal -->
+    <div id="editQuizModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-xl bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Edit Quiz</h3>
+                    <button onclick="closeModal('editQuizModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="editQuizForm" class="space-y-4">
+                    <input type="hidden" id="editQuizId">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label for="editQuizTitle" class="block text-sm font-medium text-gray-700 mb-1">Quiz Title *</label>
+                            <input type="text" id="editQuizTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="editQuizDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="editQuizDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+                        <div>
+                            <label for="editQuizDate" class="block text-sm font-medium text-gray-700 mb-1">Quiz Date *</label>
+                            <input type="date" id="editQuizDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="editQuizTime" class="block text-sm font-medium text-gray-700 mb-1">Start Time *</label>
+                            <input type="time" id="editQuizTime" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="editInstructionMinutes" class="block text-sm font-medium text-gray-700 mb-1">Instruction Time (minutes)</label>
+                            <input type="number" id="editInstructionMinutes" min="1" max="30" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="editQuizMinutes" class="block text-sm font-medium text-gray-700 mb-1">Quiz Duration (minutes)</label>
+                            <input type="number" id="editQuizMinutes" min="5" max="180" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="editTotalQuestions" class="block text-sm font-medium text-gray-700 mb-1">Total Questions</label>
+                            <input type="number" id="editTotalQuestions" min="1" max="100" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="editIsActive" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <label for="editIsActive" class="ml-2 text-sm text-gray-700">Active Quiz</label>
+                        </div>
+                    </div>
+                </form>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeModal('editQuizModal')" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                    <button onclick="updateQuiz()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Update Quiz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Questions Modal -->
+    <div id="manageQuestionsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-5 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-xl bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Manage Questions - <span id="questionsQuizTitle"></span></h3>
+                    <button onclick="closeModal('manageQuestionsModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <input type="hidden" id="questionsQuizId">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-sm text-gray-600">
+                            <span id="questionsCount">0</span> questions added
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="addNewQuestion()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+                                <i class="fas fa-plus mr-1"></i>Add Question
+                            </button>
+                            <button onclick="addQuestionFromTemplate()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+                                <i class="fas fa-magic mr-1"></i>Template
+                            </button>
+                            <button onclick="toggleBulkUpload()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+                                <i class="fas fa-upload mr-1"></i>Upload
+                            </button>
+                            <button onclick="clearAllQuestions()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+                                <i class="fas fa-trash mr-1"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Bulk Upload Section -->
+                    <div id="bulkUploadSection" class="mb-4 p-4 bg-gray-50 rounded-lg hidden">
+                        <h4 class="text-md font-medium text-gray-900 mb-3">Upload Questions from File</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <input type="file" id="questionsFile" accept=".csv,.xlsx,.xls" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                <p class="mt-1 text-xs text-gray-500">CSV or Excel file with columns: question_text, option_a, option_b, option_c, option_d, correct_answer (letter: a, b, c, d or number: 1, 2, 3, 4)</p>
+                            </div>
+                            <div class="flex space-x-3">
+                                <button onclick="uploadQuestionsFile()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Upload & Parse</button>
+                                <button onclick="downloadTemplate()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Download Template</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="questionsContainer" class="space-y-4 max-h-96 overflow-y-auto">
+                    <!-- Questions will be populated here -->
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeModal('manageQuestionsModal')" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Close</button>
+                    <button onclick="saveAllQuestions()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save All Questions</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Session Modal -->
+    <div id="createSessionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-5 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-xl bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Create New Session</h3>
+                    <button onclick="closeModal('createSessionModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="createSessionForm" onsubmit="createSession(event)">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="sessionTitle" class="block text-sm font-medium text-gray-700 mb-1">Session Title *</label>
+                            <input type="text" id="sessionTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., HR Quiz - January 2024">
+                        </div>
+                        <div>
+                            <label for="sessionQuiz" class="block text-sm font-medium text-gray-700 mb-1">Select Quiz *</label>
+                            <select id="sessionQuiz" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Choose a quiz...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="sessionDate" class="block text-sm font-medium text-gray-700 mb-1">Session Date *</label>
+                            <input type="date" id="sessionDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="sessionTime" class="block text-sm font-medium text-gray-700 mb-1">Start Time *</label>
+                            <input type="time" id="sessionTime" required value="04:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="sessionMaxParticipants" class="block text-sm font-medium text-gray-700 mb-1">Max Participants</label>
+                            <input type="number" id="sessionMaxParticipants" min="1" max="1000" value="300" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="sessionInstructionTime" class="block text-sm font-medium text-gray-700 mb-1">Instruction Time (minutes)</label>
+                            <input type="number" id="sessionInstructionTime" min="1" max="30" value="5" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="sessionDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="sessionDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Session description and instructions for participants"></textarea>
+                        </div>
+                        <div class="md:col-span-2">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="sessionAutoStart" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label for="sessionAutoStart" class="ml-2 block text-sm text-gray-700">Auto-start session at scheduled time</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal('createSessionModal')" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Create Session</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Session Modal -->
+    <div id="editSessionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-xl bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between p-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">Edit Session</h3>
+                    <button onclick="closeModal('editSessionModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="editSessionForm" onsubmit="updateSession(event)" class="p-4 space-y-4">
+                    <input type="hidden" id="editSessionId">
+                    
+                    <div>
+                        <label for="editSessionTitle" class="block text-sm font-medium text-gray-700 mb-1">Session Title</label>
+                        <input type="text" id="editSessionTitle" required 
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Enter session title">
+                    </div>
+                    
+                    <div>
+                        <label for="editSessionQuiz" class="block text-sm font-medium text-gray-700 mb-1">Select Quiz</label>
+                        <select id="editSessionQuiz" required 
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Choose a quiz...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="editSessionDate" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                            <input type="date" id="editSessionDate" required 
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="editSessionTime" class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                            <input type="time" id="editSessionTime" required value="04:00"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="editSessionMaxParticipants" class="block text-sm font-medium text-gray-700 mb-1">Max Participants</label>
+                        <input type="number" id="editSessionMaxParticipants" min="1" max="300" value="300" required 
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeModal('editSessionModal')" 
+                                class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            Update Session
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Monitor Modal -->
+    <div id="sessionMonitorModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-2 mx-auto p-5 border w-11/12 max-w-7xl shadow-lg rounded-xl bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900" id="monitorSessionTitle">Session Monitor</h3>
+                        <p class="text-sm text-gray-600" id="monitorSessionStatus">Loading...</p>
+                    </div>
+                    <button onclick="closeModal('sessionMonitorModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Live Session Controls -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-blue-600" id="sessionTimer">--:--</div>
+                                <div class="text-xs text-gray-600" id="sessionTimerLabel">Timer</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-green-600" id="liveParticipants">0</div>
+                                <div class="text-xs text-gray-600">Live</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-purple-600" id="completedCount">0</div>
+                                <div class="text-xs text-gray-600">Completed</div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="startInstructionBtn" onclick="startInstruction(window.currentSessionId)" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium hidden">
+                                <i class="fas fa-play mr-2"></i>Start Instruction
+                            </button>
+                            <button id="startQuizBtn" onclick="startQuiz(window.currentSessionId)" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium hidden">
+                                <i class="fas fa-play mr-2"></i>Start Quiz
+                            </button>
+                            <button id="endSessionBtn" onclick="endSession(window.currentSessionId)" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium hidden">
+                                <i class="fas fa-stop mr-2"></i>End Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Live Participants Table -->
+                <div class="bg-white rounded-lg border border-gray-200">
+                    <div class="p-4 border-b border-gray-200">
+                        <h4 class="text-md font-semibold text-gray-900">Live Participants</h4>
+                    </div>
+                    <div id="liveParticipantsTable" class="p-4 max-h-96 overflow-y-auto">
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-users text-2xl mb-2"></i>
+                            <p>No participants connected</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Analysis Modal -->
+    <div id="sessionAnalysisModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-2 mx-auto p-5 border w-11/12 max-w-7xl shadow-lg rounded-xl bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900" id="analysisSessionTitle">Session Analysis</h3>
+                        <p class="text-sm text-gray-600" id="analysisSessionSubtitle">Loading...</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="flex space-x-2">
+                            <button onclick="exportSessionResults(window.currentAnalysisSessionId)" 
+                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                <i class="fas fa-download mr-2"></i>CSV
+                            </button>
+                            <button onclick="exportSessionPDF(window.currentAnalysisSessionId)" 
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                <i class="fas fa-file-pdf mr-2"></i>PDF
+                            </button>
+                        </div>
+                        <button onclick="closeModal('sessionAnalysisModal')" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Session Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <div class="text-2xl font-bold text-blue-700" id="analysisParticipants">0</div>
+                        <div class="text-sm text-blue-600">Total Participants</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                        <div class="text-2xl font-bold text-green-700" id="analysisAvgScore">0%</div>
+                        <div class="text-sm text-green-600">Average Score</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                        <div class="text-2xl font-bold text-purple-700" id="analysisAvgTime">0:00</div>
+                        <div class="text-sm text-purple-600">Average Time</div>
+                    </div>
+                    <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                        <div class="text-2xl font-bold text-yellow-700" id="analysisQuestions">0</div>
+                        <div class="text-sm text-yellow-600">Total Questions</div>
+                    </div>
+                </div>
+
+                <!-- Tabs Navigation -->
+                <div class="border-b border-gray-200 mb-6">
+                    <nav class="-mb-px flex space-x-8">
+                        <button onclick="showAnalysisTab('participants')" 
+                                class="analysis-tab-btn py-2 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600" 
+                                id="participants-tab">
+                            Participant Results
+                        </button>
+                        <button onclick="showAnalysisTab('questions')" 
+                                class="analysis-tab-btn py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" 
+                                id="questions-tab">
+                            Question Analysis
+                        </button>
+                        <button onclick="showAnalysisTab('performance')" 
+                                class="analysis-tab-btn py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" 
+                                id="performance-tab">
+                            Performance Distribution
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Participants Tab -->
+                <div id="participants-analysis" class="analysis-tab-content">
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <h4 class="text-md font-semibold text-gray-900">Participant Rankings</h4>
+                            <div class="flex items-center space-x-2">
+                                <input type="search" id="participantSearch" placeholder="Search participants..." 
+                                       class="border border-gray-300 rounded-lg px-3 py-1 text-sm">
+                                <select id="performanceFilter" class="border border-gray-300 rounded-lg px-3 py-1 text-sm">
+                                    <option value="">All Performance</option>
+                                    <option value="Excellent">Excellent</option>
+                                    <option value="Good">Good</option>
+                                    <option value="Needs Improvement">Needs Improvement</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participant</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="participantResultsTable" class="bg-white divide-y divide-gray-200">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Questions Analysis Tab -->
+                <div id="questions-analysis" class="analysis-tab-content hidden">
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="p-4 border-b border-gray-200">
+                            <h4 class="text-md font-semibold text-gray-900">Question Performance Analysis</h4>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Success Rate</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correct</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Incorrect</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unanswered</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Difficulty</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="questionAnalysisTable" class="bg-white divide-y divide-gray-200">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Distribution Tab -->
+                <div id="performance-analysis" class="analysis-tab-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Score Distribution -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-4">
+                            <h4 class="text-md font-semibold text-gray-900 mb-4">Score Distribution</h4>
+                            <div class="w-full h-64">
+                                <canvas id="scoreDistributionChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Performance Categories -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-4">
+                            <h4 class="text-md font-semibold text-gray-900 mb-4">Performance Categories</h4>
+                            <div class="w-full h-64">
+                                <canvas id="performanceDistributionChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Time Analysis -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-4">
+                            <h4 class="text-md font-semibold text-gray-900 mb-4">Time Analysis</h4>
+                            <div class="w-full h-64">
+                                <canvas id="timeAnalysisChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Question Performance -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-4">
+                            <h4 class="text-md font-semibold text-gray-900 mb-4">Question Difficulty Analysis</h4>
+                            <div class="w-full h-64">
+                                <canvas id="questionDifficultyChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Prize Winners (Full Width) -->
+                        <div class="lg:col-span-2 bg-white rounded-lg border border-gray-200 p-4">
+                            <h4 class="text-md font-semibold text-gray-900 mb-4">Prize Winners</h4>
+                            <div id="prizeWinnersDisplay" class="space-y-3">
+                                <!-- Prize winners display -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Participant Profile Modal -->
+    <div id="participantProfileModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-2 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-xl bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900" id="profileParticipantName">Participant Profile</h3>
+                        <p class="text-sm text-gray-600" id="profileParticipantDetails">Loading...</p>
+                    </div>
+                    <button onclick="closeModal('participantProfileModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Participant Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <div class="text-2xl font-bold text-blue-700" id="profileTotalSessions">0</div>
+                        <div class="text-sm text-blue-600">Total Sessions</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                        <div class="text-2xl font-bold text-green-700" id="profileAvgScore">0%</div>
+                        <div class="text-sm text-green-600">Average Score</div>
+                    </div>
+                    <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                        <div class="text-2xl font-bold text-yellow-700" id="profilePrizeCount">0</div>
+                        <div class="text-sm text-yellow-600">Prizes Won</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                        <div class="text-2xl font-bold text-purple-700" id="profileBestRank">-</div>
+                        <div class="text-sm text-purple-600">Best Rank</div>
+                    </div>
+                </div>
+
+                <!-- Session History -->
+                <div class="bg-white rounded-lg border border-gray-200 mb-6">
+                    <div class="p-4 border-b border-gray-200">
+                        <h4 class="text-md font-semibold text-gray-900">Session History</h4>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Session</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quiz</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profileSessionHistoryTable" class="bg-white divide-y divide-gray-200">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Review Modal -->
+    <div id="questionReviewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-2 mx-auto p-5 border w-11/12 max-w-7xl shadow-lg rounded-xl bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900" id="reviewSessionTitle">Question-by-Question Review</h3>
+                        <p class="text-sm text-gray-600" id="reviewSessionSubtitle">Loading...</p>
+                    </div>
+                    <button onclick="closeModal('questionReviewModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Review Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <div class="text-2xl font-bold text-blue-700" id="reviewTotalQuestions">0</div>
+                        <div class="text-sm text-blue-600">Total Questions</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                        <div class="text-2xl font-bold text-green-700" id="reviewCorrect">0</div>
+                        <div class="text-sm text-green-600">Correct</div>
+                    </div>
+                    <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                        <div class="text-2xl font-bold text-red-700" id="reviewIncorrect">0</div>
+                        <div class="text-sm text-red-600">Incorrect</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div class="text-2xl font-bold text-gray-700" id="reviewUnanswered">0</div>
+                        <div class="text-sm text-gray-600">Unanswered</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                        <div class="text-2xl font-bold text-purple-700" id="reviewAvgTime">0s</div>
+                        <div class="text-sm text-purple-600">Avg Time/Q</div>
+                    </div>
+                </div>
+
+                <!-- Questions List -->
+                <div class="bg-white rounded-lg border border-gray-200">
+                    <div class="p-4 border-b border-gray-200">
+                        <h4 class="text-md font-semibold text-gray-900">Detailed Question Review</h4>
+                    </div>
+                    <div id="questionReviewList" class="max-h-96 overflow-y-auto">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 flex items-center space-x-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span class="text-gray-700 font-medium">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="/admin/js/dashboard.js"></script>
+    
+    </div> <!-- End main-content -->
+</body>
+</html>

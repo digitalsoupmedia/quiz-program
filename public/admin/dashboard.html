@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Competition - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        },
+                        sidebar: '#1e293b',
+                        'sidebar-hover': '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        
+        .card-shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        
+        .scrollbar-hidden {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .scrollbar-hidden::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Navigation Header -->
+    <nav class="bg-white border-b border-gray-200 fixed w-full z-30 top-0">
+        <div class="px-3 py-3 lg:px-5 lg:pl-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center justify-start">
+                    <button id="toggleSidebar" class="lg:hidden p-2 text-gray-600 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100">
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
+                    <a href="#" class="text-xl font-bold text-gray-900 ml-2 md:mr-24">
+                        <span class="gradient-bg bg-clip-text text-transparent">QuizAdmin</span>
+                    </a>
+                </div>
+                <div class="flex items-center">
+                    <div class="hidden mr-3 -mb-1 sm:block">
+                        <span class="text-base text-gray-900 font-semibold mr-1">Hello,</span>
+                        <span id="admin-name" class="text-base text-gray-900 font-normal">Admin</span>
+                    </div>
+                    <div class="flex items-center ml-3">
+                        <button class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 relative">
+                            <img class="w-8 h-8 rounded-full" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L9 7V9C7.9 9 7 9.9 7 11V22H17V11C17 9.9 16.1 9 15 9H21Z'/%3E%3C/svg%3E" alt="user photo">
+                            <div class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-400 border-2 border-white rounded-full"></div>
+                        </button>
+                        <button onclick="logout()" class="ml-3 text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-20 w-64 h-screen pt-20 transition-transform -translate-x-full bg-sidebar border-r border-gray-200 lg:translate-x-0">
+        <div class="h-full px-3 pb-4 overflow-y-auto scrollbar-hidden">
+            <ul class="space-y-2 font-medium">
+                <li>
+                    <a href="#" onclick="showSection('dashboard')" class="nav-link active flex items-center p-3 text-white rounded-lg hover:bg-sidebar-hover group">
+                        <i class="fas fa-chart-pie text-lg w-5 h-5"></i>
+                        <span class="ml-3">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('participants')" class="nav-link flex items-center p-3 text-gray-300 rounded-lg hover:bg-sidebar-hover hover:text-white group">
+                        <i class="fas fa-users text-lg w-5 h-5"></i>
+                        <span class="ml-3">Participants</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('quizzes')" class="nav-link flex items-center p-3 text-gray-300 rounded-lg hover:bg-sidebar-hover hover:text-white group">
+                        <i class="fas fa-file-alt text-lg w-5 h-5"></i>
+                        <span class="ml-3">Quizzes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('sessions')" class="nav-link flex items-center p-3 text-gray-300 rounded-lg hover:bg-sidebar-hover hover:text-white group">
+                        <i class="fas fa-play-circle text-lg w-5 h-5"></i>
+                        <span class="ml-3">Live Sessions</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('results')" class="nav-link flex items-center p-3 text-gray-300 rounded-lg hover:bg-sidebar-hover hover:text-white group">
+                        <i class="fas fa-chart-bar text-lg w-5 h-5"></i>
+                        <span class="ml-3">Results</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- Upgrade Section -->
+            <div class="mt-8 p-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white text-center">
+                <div class="mb-2">
+                    <i class="fas fa-rocket text-2xl"></i>
+                </div>
+                <h3 class="font-semibold mb-1">Quiz Pro</h3>
+                <p class="text-xs opacity-90 mb-3">Advanced analytics & unlimited participants</p>
+                <button class="w-full bg-white text-blue-600 py-2 px-4 rounded text-sm font-medium hover:bg-gray-100 transition-colors">
+                    Upgrade
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="p-4 lg:ml-64">
+        <div class="pt-20">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="content-section">
+                <!-- Header -->
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-gray-900 mb-2">Dashboard</h1>
+                    <p class="text-gray-600">Welcome back! Here's what's happening with your quiz competitions.</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Total Participants -->
+                    <div class="bg-white rounded-xl p-6 card-shadow-lg border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Total Participants</p>
+                                <p id="total-participants" class="text-3xl font-bold text-gray-900">0</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="flex items-center text-sm text-green-600">
+                                        <i class="fas fa-arrow-up text-xs mr-1"></i>
+                                        <span class="font-medium">12%</span>
+                                    </span>
+                                    <span class="text-gray-500 text-sm ml-2">vs last month</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-blue-50 rounded-full">
+                                <i class="fas fa-users text-xl text-blue-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Sessions -->
+                    <div class="bg-white rounded-xl p-6 card-shadow-lg border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Active Sessions</p>
+                                <p id="active-sessions" class="text-3xl font-bold text-gray-900">0</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="flex items-center text-sm text-orange-600">
+                                        <i class="fas fa-clock text-xs mr-1"></i>
+                                        <span class="font-medium">Live</span>
+                                    </span>
+                                    <span class="text-gray-500 text-sm ml-2">sessions running</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-orange-50 rounded-full">
+                                <i class="fas fa-play-circle text-xl text-orange-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Quizzes -->
+                    <div class="bg-white rounded-xl p-6 card-shadow-lg border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Total Quizzes</p>
+                                <p id="total-quizzes" class="text-3xl font-bold text-gray-900">0</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="flex items-center text-sm text-green-600">
+                                        <i class="fas fa-plus text-xs mr-1"></i>
+                                        <span class="font-medium">5</span>
+                                    </span>
+                                    <span class="text-gray-500 text-sm ml-2">new this week</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-green-50 rounded-full">
+                                <i class="fas fa-file-alt text-xl text-green-500"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Completed Results -->
+                    <div class="bg-white rounded-xl p-6 card-shadow-lg border border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Completed Results</p>
+                                <p id="total-results" class="text-3xl font-bold text-gray-900">0</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="flex items-center text-sm text-purple-600">
+                                        <i class="fas fa-chart-line text-xs mr-1"></i>
+                                        <span class="font-medium">98%</span>
+                                    </span>
+                                    <span class="text-gray-500 text-sm ml-2">completion rate</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-purple-50 rounded-full">
+                                <i class="fas fa-chart-bar text-xl text-purple-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and Tables Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Recent Sessions -->
+                    <div class="lg:col-span-2 bg-white rounded-xl card-shadow-lg border border-gray-100">
+                        <div class="p-6 border-b border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Recent Sessions</h3>
+                                <button class="text-blue-600 text-sm font-medium hover:text-blue-800">View All</button>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div id="recent-sessions-table" class="overflow-x-auto">
+                                <!-- Table will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Performers -->
+                    <div class="bg-white rounded-xl card-shadow-lg border border-gray-100">
+                        <div class="p-6 border-b border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900">Top Performers</h3>
+                            <p class="text-sm text-gray-600 mt-1">Last 30 days</p>
+                        </div>
+                        <div class="p-6">
+                            <div id="top-performers-list" class="space-y-4">
+                                <!-- List will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Participants Section -->
+            <div id="participants-section" class="content-section hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 mb-2">Participants</h1>
+                        <p class="text-gray-600">Manage quiz participants and their credentials</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button onclick="openModal('uploadParticipantsModal')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center">
+                            <i class="fas fa-upload mr-2"></i>
+                            Upload Participants
+                        </button>
+                        <button onclick="viewCredentials()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center">
+                            <i class="fas fa-eye mr-2"></i>
+                            View Credentials
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search and Filters -->
+                <div class="bg-white rounded-xl p-6 card-shadow-lg border border-gray-100 mb-6">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1">
+                            <div class="relative">
+                                <input type="text" id="participant-search" placeholder="Search participants..." 
+                                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            </div>
+                        </div>
+                        <button onclick="searchParticipants()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                            Search
+                        </button>
+                        <button onclick="loadParticipants()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-refresh mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Participants Table -->
+                <div class="bg-white rounded-xl card-shadow-lg border border-gray-100">
+                    <div class="p-6 border-b border-gray-100">
+                        <h3 class="text-lg font-semibold text-gray-900">All Participants</h3>
+                    </div>
+                    <div id="participants-table-container" class="overflow-x-auto">
+                        <!-- Table will be populated by JavaScript -->
+                    </div>
+                    <div id="participants-pagination" class="p-6 border-t border-gray-100">
+                        <!-- Pagination will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Sections (placeholder) -->
+            <div id="quizzes-section" class="content-section hidden">
+                <h1 class="text-2xl font-bold text-gray-900 mb-6">Quiz Management</h1>
+                <div class="bg-white rounded-xl p-8 card-shadow-lg border border-gray-100 text-center">
+                    <i class="fas fa-file-alt text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Quiz Management</h3>
+                    <p class="text-gray-600">Coming soon - Create and manage quiz content</p>
+                </div>
+            </div>
+
+            <div id="sessions-section" class="content-section hidden">
+                <h1 class="text-2xl font-bold text-gray-900 mb-6">Live Sessions</h1>
+                <div class="bg-white rounded-xl p-8 card-shadow-lg border border-gray-100 text-center">
+                    <i class="fas fa-play-circle text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Session Control</h3>
+                    <p class="text-gray-600">Coming soon - Manage live quiz sessions</p>
+                </div>
+            </div>
+
+            <div id="results-section" class="content-section hidden">
+                <h1 class="text-2xl font-bold text-gray-900 mb-6">Results & Analytics</h1>
+                <div class="bg-white rounded-xl p-8 card-shadow-lg border border-gray-100 text-center">
+                    <i class="fas fa-chart-bar text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Results Dashboard</h3>
+                    <p class="text-gray-600">Coming soon - View detailed analytics and reports</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Upload Participants Modal -->
+    <div id="uploadParticipantsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-xl bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Upload Participants</h3>
+                    <button onclick="closeModal('uploadParticipantsModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="mt-4">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600 mb-2">Drag and drop your file here, or</p>
+                        <input type="file" id="participantFile" accept=".csv,.xlsx,.xls" class="hidden">
+                        <button onclick="document.getElementById('participantFile').click()" class="text-blue-600 font-medium hover:text-blue-800">browse files</button>
+                        <p class="text-xs text-gray-500 mt-2">Supports CSV, Excel files</p>
+                    </div>
+                    <div class="mt-4 flex justify-end space-x-3">
+                        <button onclick="closeModal('uploadParticipantsModal')" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                        <button onclick="uploadParticipants()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Upload</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Credentials Modal -->
+    <div id="viewCredentialsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border shadow-lg rounded-xl bg-white max-w-4xl">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Participant Credentials</h3>
+                    <button onclick="closeModal('viewCredentialsModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="credentials-table-container" class="mt-4">
+                    <!-- Credentials table will be populated here -->
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeModal('viewCredentialsModal')" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Close</button>
+                    <button onclick="exportCredentials()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        <i class="fas fa-download mr-2"></i>Export CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Results Modal -->
+    <div id="sessionResultsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-10 mx-auto p-5 border shadow-lg rounded-xl bg-white max-w-6xl">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900" id="sessionResultsTitle">Session Results</h3>
+                        <p class="text-sm text-gray-600 mt-1" id="sessionResultsSubtitle">Detailed results and statistics</p>
+                    </div>
+                    <button onclick="closeModal('sessionResultsModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Session Info -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-600" id="totalParticipantsCount">0</div>
+                            <div class="text-sm text-gray-600">Total Participants</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-600" id="completedCount">0</div>
+                            <div class="text-sm text-gray-600">Completed</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-purple-600" id="averageScore">0%</div>
+                            <div class="text-sm text-gray-600">Average Score</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-yellow-600" id="prizeWinnersCount">0</div>
+                            <div class="text-sm text-gray-600">Prize Winners</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prize Winners Section -->
+                <div id="prizeWinnersSection" class="mb-6 hidden">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-3">🏆 Prize Winners</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="prizeWinnersCards">
+                        <!-- Prize winners will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Results Table -->
+                <div class="bg-white rounded-lg border">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h4 class="text-lg font-semibold text-gray-900">Participant Results</h4>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participant</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correct</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prize</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="resultsTableBody">
+                                <!-- Results will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="mt-6 flex justify-between">
+                    <button onclick="exportSessionResults()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        <i class="fas fa-download mr-2"></i>Export Results
+                    </button>
+                    <div class="space-x-3">
+                        <button onclick="recalculatePrizes()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-calculator mr-2"></i>Recalculate Prizes
+                        </button>
+                        <button onclick="closeModal('sessionResultsModal')" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 flex items-center space-x-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span class="text-gray-700 font-medium">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/admin/js/dashboard.js"></script>
+</body>
+</html>

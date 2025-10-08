@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Results - Your Performance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .mobile-container {
+            max-width: 420px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        .results-card {
+            background: white;
+            border-radius: 24px;
+            margin: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(#1f2937 var(--progress), #e5e7eb var(--progress));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        .score-inner {
+            width: 96px;
+            height: 96px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+        }
+        .prize-winner {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+        }
+        .answer-item {
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            padding: 16px;
+            margin: 8px 0;
+        }
+        .answer-correct {
+            border-color: #10b981;
+            background: #d1fae5;
+        }
+        .answer-incorrect {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+        .answer-unanswered {
+            border-color: #6b7280;
+            background: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="mobile-container">
+        <!-- Header -->
+        <div class="bg-white px-6 py-4 flex items-center justify-between border-b border-gray-100">
+            <button onclick="goHome()" class="text-gray-600">
+                <i class="fas fa-home text-xl"></i>
+            </button>
+            <h1 class="text-lg font-semibold text-gray-900">Quiz Results</h1>
+            <div class="w-6"></div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-16">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading your results...</p>
+        </div>
+
+        <!-- Results Content -->
+        <div id="resultsContent" class="hidden">
+            <!-- Congratulations Message -->
+            <div class="results-card text-center" id="congratsCard">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-trophy text-green-600 text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Congratulations!</h2>
+                <p class="text-gray-600" id="congratsMessage">You have completed the quiz</p>
+            </div>
+
+            <!-- Score Display -->
+            <div class="results-card text-center">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Your Score</h3>
+                
+                <div class="score-circle mb-6" id="scoreCircle" style="--progress: 0%">
+                    <div class="score-inner">
+                        <span class="text-2xl font-bold text-gray-900" id="scorePercentage">0</span>
+                        <span class="text-sm text-gray-600">pts</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="stat-card">
+                        <div class="text-xl font-bold text-green-600" id="correctCount">0</div>
+                        <div class="text-xs text-gray-600">Correct</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-xl font-bold text-red-600" id="incorrectCount">0</div>
+                        <div class="text-xs text-gray-600">Incorrect</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-xl font-bold text-gray-600" id="unansweredCount">0</div>
+                        <div class="text-xs text-gray-600">Unanswered</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-sm text-gray-600">
+                    <div class="flex justify-between items-center">
+                        <span>Time Taken:</span>
+                        <span class="font-medium" id="timeTaken">0:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prize Winners (if available) -->
+            <div id="prizeWinnersCard" class="results-card hidden">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">🏆 Prize Winners 🏆</h3>
+                <div id="prizeWinnersList">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+
+            <!-- Performance Category -->
+            <div class="results-card" style="display: none;">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-semibold text-gray-900">Performance</h4>
+                        <p class="text-sm text-gray-600">Based on your score</p>
+                    </div>
+                    <div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium" id="performanceBadge">
+                            <!-- Dynamic content -->
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="px-6 pb-6">
+                <div class="space-y-3">
+                    <button onclick="showDetailedReview()" class="w-full py-3 px-4 bg-gray-900 text-white rounded-xl font-medium">
+                        <i class="fas fa-list mr-2"></i>Review Answers
+                    </button>
+                    <button onclick="goHome()" class="w-full py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-medium">
+                        <i class="fas fa-home mr-2"></i>Back to Dashboard
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Review Modal -->
+        <div id="reviewModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto hidden z-50">
+            <div class="min-h-screen px-4 py-4">
+                <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-auto my-4 max-h-screen flex flex-col">
+                    <div class="flex items-center justify-between mb-6 flex-shrink-0">
+                        <h3 class="text-lg font-semibold text-gray-900">Detailed Review</h3>
+                        <button onclick="closeReviewModal()" class="text-gray-400">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="reviewContent" class="space-y-4 overflow-y-auto flex-1 min-h-0">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/quiz/js/results.js"></script>
+</body>
+</html>

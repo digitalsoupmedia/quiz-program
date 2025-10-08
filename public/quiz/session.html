@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Session - Live Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .mobile-container {
+            max-width: 420px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        .question-card {
+            background: white;
+            border-radius: 24px;
+            margin: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .option-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .option-card:hover {
+            border-color: #6b7280;
+            background: #f9fafb;
+        }
+        .option-card.selected {
+            border-color: #1f2937;
+            background: #f9fafb;
+        }
+        .option-card.correct {
+            border-color: #10b981;
+            background: #d1fae5;
+        }
+        .option-card.incorrect {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+        .timer-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(#1f2937 var(--progress), #e5e7eb var(--progress));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .timer-inner {
+            width: 64px;
+            height: 64px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .timer-warning {
+            background: conic-gradient(#ef4444 var(--progress), #fecaca var(--progress)) !important;
+        }
+        .progress-bar {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #1f2937;
+            transition: width 0.3s ease;
+        }
+        .progress-fill.warning {
+            background: #ef4444;
+        }
+        .question-nav {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .question-nav-item {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .question-nav-item.answered {
+            background: #1f2937;
+            color: white;
+        }
+        .question-nav-item.current {
+            background: #6b7280;
+            color: white;
+        }
+        .question-nav-item.unanswered {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="mobile-container">
+        <!-- Header with Timer -->
+        <div class="bg-white px-6 py-4 flex items-center justify-between border-b border-gray-100">
+            <button onclick="showExitConfirm()" class="text-gray-600">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </button>
+            
+            <!-- Timer -->
+            <div class="timer-circle" id="timerCircle" style="--progress: 0%">
+                <div class="timer-inner">
+                    <span class="text-lg font-bold text-gray-900" id="timerMinutes">00</span>
+                    <span class="text-xs text-gray-600" id="timerSeconds">00</span>
+                </div>
+            </div>
+            
+            <button onclick="showQuestionNav()" class="text-gray-600">
+                <i class="fas fa-th text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="px-6 py-2">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between mt-2 text-sm text-gray-600">
+                <span>Question <span id="currentQuestionNumber">1</span> / <span id="totalQuestions">30</span></span>
+                <span id="sessionTitle">Quiz Session</span>
+            </div>
+        </div>
+
+        <!-- Instruction Phase -->
+        <div id="instructionPhase" class="hidden">
+            <div class="question-card">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-info-circle text-gray-600 text-2xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-2">Quiz Instructions</h2>
+                    <p class="text-gray-600">Please read carefully before starting</p>
+                </div>
+
+                <div class="space-y-4 text-sm text-gray-700">
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-clock text-red-500 mt-1"></i>
+                        <div>
+                            <strong>Cool time:</strong> You have 5 minutes cool time.<br>
+                            <strong>Duration:</strong> You have 15 minutes to complete the quiz
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-question-circle text-blue-500 mt-1"></i>
+                        <div>
+                            <strong>Questions:</strong> <span id="instructionQuestionCount">30</span> multiple choice questions
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-mouse-pointer text-green-500 mt-1"></i>
+                        <div>
+                            <strong>Navigation:</strong> You can skip questions and return to them later
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-exclamation-triangle text-yellow-500 mt-1"></i>
+                        <div>
+                            <strong>Submission:</strong> You have to submit the answers before quiz timeout reaches.
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="startQuiz()" id="startQuizBtn" 
+                        class="w-full mt-8 py-4 bg-gray-900 text-white rounded-xl font-semibold text-lg">
+                    Start Quiz
+                </button>
+            </div>
+        </div>
+
+        <!-- Quiz Phase -->
+        <div id="quizPhase" class="hidden">
+            <!-- Question Content -->
+            <div class="question-card">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6" id="questionText">
+                    Loading question...
+                </h3>
+
+                <!-- Options -->
+                <div id="optionsContainer" class="space-y-3">
+                    <!-- Dynamic options will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="px-6 pb-6">
+                <div class="flex space-x-3">
+                    <button onclick="previousQuestion()" id="prevBtn" 
+                            class="flex-1 py-3 px-4 border border-gray-300 rounded-xl text-gray-700 font-medium disabled:opacity-50">
+                        <i class="fas fa-chevron-left mr-2"></i>Previous
+                    </button>
+                    <button onclick="nextQuestion()" id="nextBtn" 
+                            class="flex-1 py-3 px-4 bg-gray-900 text-white rounded-xl font-medium">
+                        Next<i class="fas fa-chevron-right ml-2"></i>
+                    </button>
+                </div>
+                
+                <button onclick="showSubmitConfirm()" id="submitBtn" 
+                        class="w-full mt-3 py-3 px-4 bg-red-500 text-white rounded-xl font-medium">
+                    Submit Quiz
+                </button>
+            </div>
+        </div>
+
+        <!-- Waiting Phase -->
+        <div id="waitingPhase" class="text-center py-16">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-clock text-gray-600 text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Quiz Not Started</h2>
+            <p class="text-gray-600 mb-4">Please wait for the quiz to begin</p>
+            <button onclick="checkSessionStatus()" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Question Navigation Modal -->
+    <div id="questionNavModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Question Navigation</h3>
+                <button onclick="closeQuestionNav()" class="text-gray-400">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="question-nav mb-4" id="questionNavGrid">
+                <!-- Dynamic content -->
+            </div>
+            
+            <div class="flex items-center justify-between text-xs text-gray-600">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-gray-900 rounded mr-2"></div>
+                    <span>Answered</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-gray-400 rounded mr-2"></div>
+                    <span>Current</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 bg-gray-100 border border-gray-300 rounded mr-2"></div>
+                    <span>Unanswered</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Confirmation Modal -->
+    <div id="submitModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-paper-plane text-red-500 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Submit Quiz?</h3>
+                <p class="text-gray-600">Are you sure you want to submit your quiz? This action cannot be undone.</p>
+            </div>
+            
+            <div id="submitSummary" class="bg-gray-50 rounded-xl p-4 mb-6 text-sm">
+                <!-- Dynamic summary -->
+            </div>
+            
+            <div class="flex space-x-3">
+                <button onclick="closeSubmitModal()" class="flex-1 py-3 px-4 border border-gray-300 rounded-xl text-gray-700 font-medium">
+                    Continue Quiz
+                </button>
+                <button onclick="submitQuiz()" id="finalSubmitBtn" class="flex-1 py-3 px-4 bg-red-500 text-white rounded-xl font-medium">
+                    Submit Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exit Confirmation Modal -->
+    <div id="exitModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Exit Quiz?</h3>
+                <p class="text-gray-600">Your progress will be lost if you exit now.</p>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button onclick="closeExitModal()" class="flex-1 py-3 px-4 border border-gray-300 rounded-xl text-gray-700 font-medium">
+                    Stay
+                </button>
+                <button onclick="exitQuiz()" class="flex-1 py-3 px-4 bg-yellow-500 text-white rounded-xl font-medium">
+                    Exit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/quiz/js/session.js"></script>
+</body>
+</html>

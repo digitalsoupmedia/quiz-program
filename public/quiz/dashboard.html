@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Dashboard - Available Sessions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .mobile-container {
+            max-width: 420px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: #f8f9fa;
+        }
+        .card-shadow {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .quiz-card {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            margin: 16px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .session-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        .session-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="mobile-container">
+        <!-- Header -->
+        <div class="bg-white px-6 py-4 flex items-center justify-between border-b border-gray-100">
+            <button onclick="logout()" class="text-gray-600">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </button>
+            <h1 class="text-lg font-semibold text-gray-900">Quiz Dashboard</h1>
+            <div class="w-6"></div>
+        </div>
+
+        <!-- Profile Section -->
+        <div class="quiz-card card-shadow mt-4">
+            <div class="flex items-center space-x-4 mb-6">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user text-gray-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900" id="participantName">Loading...</h2>
+                    <p class="text-sm text-gray-600" id="participantEmail">Loading...</p>
+                    <p class="text-xs text-gray-500" id="participantCompany">Loading...</p>
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="bg-gray-50 rounded-xl p-3">
+                    <div class="text-lg font-bold text-gray-900" id="totalSessions">0</div>
+                    <div class="text-xs text-gray-600">Sessions</div>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-3">
+                    <div class="text-lg font-bold text-gray-900" id="completedQuizzes">0</div>
+                    <div class="text-xs text-gray-600">Completed</div>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-3">
+                    <div class="text-lg font-bold text-gray-900" id="avgScore">0%</div>
+                    <div class="text-xs text-gray-600">Avg Score</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Sessions -->
+        <div class="px-4 py-2 pb-24">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Quiz Sessions</h3>
+            
+            <!-- Information Alert -->
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4 rounded-r-lg">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-blue-700">
+                            <strong>Important:</strong> Please refresh this page during the quiz start time to see the "Enter Quiz" button and join the session.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="loadingState" class="text-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-4"></div>
+                <p class="text-gray-600">Loading sessions...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden text-center py-8">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-calendar-times text-gray-400 text-xl"></i>
+                </div>
+                <p class="text-gray-600 mb-2">No quiz sessions available</p>
+                <p class="text-sm text-gray-500">Check back later for new sessions</p>
+            </div>
+
+            <!-- Sessions List -->
+            <div id="sessionsList" class="space-y-4 hidden">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200">
+            <div class="flex items-center justify-around py-4">
+                <button onclick="refreshSessions()" class="flex flex-col items-center text-gray-600">
+                    <i class="fas fa-sync-alt text-lg mb-1"></i>
+                    <span class="text-xs">Refresh</span>
+                </button>
+                <button onclick="viewProfile()" class="flex flex-col items-center text-gray-900">
+                    <i class="fas fa-home text-lg mb-1"></i>
+                    <span class="text-xs">Home</span>
+                </button>
+                <button onclick="viewHistory()" class="flex flex-col items-center text-gray-600">
+                    <i class="fas fa-history text-lg mb-1"></i>
+                    <span class="text-xs">History</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Join Session Modal -->
+    <div id="joinModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Join Quiz Session</h3>
+            <div id="joinModalContent">
+                <!-- Dynamic content -->
+            </div>
+            <div class="flex space-x-3 mt-6">
+                <button onclick="closeJoinModal()" class="flex-1 py-3 px-4 border border-gray-300 rounded-xl text-gray-700 font-medium">
+                    Cancel
+                </button>
+                <button onclick="confirmJoinSession()" id="joinConfirmBtn" class="flex-1 py-3 px-4 bg-gray-900 text-white rounded-xl font-medium">
+                    Join Session
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50"></div>
+
+    <script src="/quiz/js/dashboard.js"></script>
+</body>
+</html>
